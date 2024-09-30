@@ -1,8 +1,12 @@
+##VS CODE
 .vscode
 
 ## FASTAPI 
 __pycache__
 venv
+prova.py
+FastAPI/third_party/ffmpeg/*
+!FastAPI/third_party/ffmpeg/version.txt
 
 ## REACT
 # Logs
@@ -30,5 +34,9 @@ dist-ssr
 *.sln
 *.sw?
 public
+
+## LOCAL
+note.txt
+temp_audio
 
 

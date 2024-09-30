@@ -51,7 +51,7 @@ async def youtube_audio(video_id: str, background_tasks: BackgroundTasks):
     video_url = f"https://www.youtube.com/watch?v={video_id}"
 
     # Generate a unique filename for the extracted audio
-    audio_file = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}.mp3")  
+    audio_file = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}")  
 
     # Start the audio extraction asynchronously
     await extract_audio(video_url, audio_file)
@@ -60,8 +60,8 @@ async def youtube_audio(video_id: str, background_tasks: BackgroundTasks):
     # background_tasks.add_task(os.remove, audio_file)
 
     # Stream the audio file back to the client
-    # return Response(stream_audio(audio_file), media_type="audio/mpeg")
-    return {"respose":"OK"}
+    return Response(stream_audio(audio_file), media_type="audio/mpeg")
+    # return {"respose":"OK"}
 
 
 
