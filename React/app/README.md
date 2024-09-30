@@ -2,6 +2,8 @@
 Install Node JS -> https://nodejs.org/en/
 cd React/app
 > npm install
+### To run locally
+> cd .\React\app\
 > npm run dev
 
 
