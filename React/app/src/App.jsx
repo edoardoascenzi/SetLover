@@ -7,8 +7,8 @@ import ResultList from './components/ResultList';
 import Container from 'react-bootstrap/esm/Container';
 import Col from 'react-bootstrap/Col';
 import MusicPlayer from './components/MusicPlayer';
-import {Song, FAKE_SONGS} from './modules.mjs'
-import Button from 'react-bootstrap/Button';
+// import {Song, FAKE_SONGS} from './modules.mjs'
+// import Button from 'react-bootstrap/Button';
 import {Routes, Route} from 'react-router-dom';
 import {Login, Signup} from './components/Auth'
 
@@ -18,7 +18,6 @@ function App() {
   const [searchQuery, setSearchQuery] = useState({source:'Youtube' , query: ''});
   const updateSearchQuery = (sq) => {
     setSearchQuery(sq)
-    // setSongs([]) //FIXME the item does not refersh the list, this was added to force the refresh (?)
     API.getSearchResult(sq.source, sq.query).then(
       res => setSongs(res)
     )
