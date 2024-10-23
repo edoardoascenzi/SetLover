@@ -1,5 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Response
 from fastapi import Query
+from fastapi.responses import StreamingResponse
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -44,11 +45,11 @@ async def youtube_search(q: str = Query(..., min_length=1)):
     return {"results": results}
 
 @router.get("/play")
-async def youtube_audio(video_id: str, background_tasks: BackgroundTasks):
+async def youtube_audio(id: str, background_tasks: BackgroundTasks):
     """
     Endpoint to extract audio from a YouTube video and stream it.
     """
-    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    video_url = f"https://www.youtube.com/watch?v={id}"
 
     # Generate a unique filename for the extracted audio
     audio_file = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}")  
@@ -60,14 +61,15 @@ async def youtube_audio(video_id: str, background_tasks: BackgroundTasks):
     # background_tasks.add_task(os.remove, audio_file)
 
     # Stream the audio file back to the client
-    return Response(stream_audio(audio_file), media_type="audio/mpeg")
+    # return Response(stream_audio(audio_file), media_type="audio/mpeg")
+    return StreamingResponse(stream_audio(audio_file), media_type="audio/mpeg")
     # return {"respose":"OK"}
 
 
 
 def scrape_youtube_search(query: str):
     # Format the YouTube search URL with the query
-    search_url = f"https://www.youtube.com/results?search_query={query.replace(' ', '+')}"
+    search_url = f"https://www.youtube.com/results?search_query={query.replace(' ', '+').replace('%','+')}"
     
     # Send a request to the YouTube search results page
     response = requests.get(search_url)
@@ -166,7 +168,7 @@ async def stream_audio(file_path: str):
     """
     async with aiofiles.open(file_path, mode='rb') as audio_file:
         while True:
-            chunk = await audio_file.read(1024 * 1024)  # Read in 1MB chunks
+            chunk = await audio_file.read(1024 * 1024 *10)  # Read in 10MB chunks
             if not chunk:
                 break
             yield chunk
