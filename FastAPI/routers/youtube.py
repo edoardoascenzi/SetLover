@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 import re
 import yt_dlp
 import os
-import uuid
 import aiofiles
 
 YOUTUBE_SEARCH_URL = "https://www.youtube.com/results"
@@ -52,18 +51,20 @@ async def youtube_audio(id: str, background_tasks: BackgroundTasks):
     video_url = f"https://www.youtube.com/watch?v={id}"
 
     # Generate a unique filename for the extracted audio
-    audio_file = os.path.join(TEMP_AUDIO_DIR, f"{uuid.uuid4()}")  
+    audio_file_no_extension = os.path.join(TEMP_AUDIO_DIR, f"{router.tags[0].lower()}_{id}")
+    audio_file = audio_file_no_extension + ".mp3"
 
-    # Start the audio extraction asynchronously
-    await extract_audio(video_url, audio_file)
+    # Check if the audio is already available
+    if not os.path.isfile(audio_file):    
+        # Start the audio extraction asynchronously
+        await extract_audio(video_url, audio_file_no_extension)
 
     # # Add background task to delete the file after serving
     # background_tasks.add_task(os.remove, audio_file)
 
     # Stream the audio file back to the client
-    # return Response(stream_audio(audio_file), media_type="audio/mpeg")
     return StreamingResponse(stream_audio(audio_file), media_type="audio/mpeg")
-    # return {"respose":"OK"}
+
 
 
 
@@ -156,6 +157,7 @@ async def extract_audio(video_url: str, audio_file: str):
         'outtmpl': audio_file,  # Save the file as a unique name
         'quiet': True,  # Suppress output for cleanliness
         'ffmpeg_location': ffmpeg_location,  # Point to local ffmpeg binary
+        'postprocessor_args': ['-f', 'mp3'],  # Force output as mp3 without adding an 
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
