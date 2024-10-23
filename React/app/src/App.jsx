@@ -18,10 +18,13 @@ function App() {
   const [searchQuery, setSearchQuery] = useState({source:'Youtube' , query: ''});
   const updateSearchQuery = (sq) => {
     setSearchQuery(sq)
-    API.getHello().then(res => console.log(res))
+    // setSongs([]) //FIXME the item does not refersh the list, this was added to force the refresh (?)
+    API.getSearchResult(sq.source, sq.query).then(
+      res => setSongs(res)
+    )
   };
 
-  const [songs, setSongs] = useState(FAKE_SONGS);
+  const [songs, setSongs] = useState([]);
   const foundSongs = songs.length > 0;
   const clearSongs = () => setSongs([]);
 

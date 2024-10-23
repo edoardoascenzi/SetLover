@@ -18,18 +18,16 @@ function ResultList (props) {
     const itemPerPage = 2
     const pages = Math.floor(props.songs.length/itemPerPage)
 
-    // const [pages, setPages] = useState(Math.floor(props.songs.length/itemPerPage))
-    // setPages(Math.floor(props.songs.length/itemPerPage))
-
     const [selectedPage, setSelectedPage] = useState(0)
     const changePage = (page) => {
         setSelectedPage(page)
-        setSongsList(props.songs.slice(page*itemPerPage, Math.min( ((page+1)*itemPerPage) , (props.songs.length) ) ) )
     }
 
-    const [songsList, setSongsList] = useState(props.songs.slice(0, Math.min( itemPerPage , (props.songs.length) ) ))
-
- 
+    // Get the slice of songs for the current page
+    const songsList = props.songs.slice(
+        selectedPage * itemPerPage,
+        Math.min((selectedPage + 1) * itemPerPage, props.songs.length)
+    );
 
     return ( <>
     <Container>
@@ -58,8 +56,8 @@ function ResultCard (props){
             </Col>
             <Col>
                 <Card.Body >
-                    <Card.Title>{props.song.title}</Card.Title>
-                    <Card.Text>{props.song.description}</Card.Text>
+                        <Card.Title>{props.song.title}</Card.Title>
+                        <Card.Text>{props.song.length} | {props.song.description}</Card.Text>
                 </Card.Body>
                 <Stack direction='horizontal' gap={2} >
                 <Button variant="success" onClick={() => props.playSong(props.song)}><i className="bi bi-play-fill"></i></Button>

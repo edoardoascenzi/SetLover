@@ -32,7 +32,7 @@ function SearchBar(prpos) {
 
         prpos.updateSearchQuery({source:source , query:query})
         
-        setQuery('')
+        // setQuery('') // clear the search bar text after the submit 
     }
 
 
