@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import NavigationBar from './components/NavigationBar';
 import SearchBar from './components/SearchBar';
-import {useState} from 'react';
+import { useState, useEffect } from 'react';
 import ResultList from './components/ResultList';
 import Container from 'react-bootstrap/esm/Container';
 import Col from 'react-bootstrap/Col';
@@ -27,16 +27,38 @@ function App() {
   const foundSongs = songs.length > 0;
   const clearSongs = () => setSongs([]);
 
+
   const [playingSong, setPlayingSong] = useState({});
+  const [bufferingState, setBufferingState] = useState(false)
   const clearPlayingSong = () => setPlayingSong({});
-  const playSong = (song) => setPlayingSong(song);
+  const playSong = (song) => {
+    if (song.stream_url === "") {
+      setBufferingState(true)
+      API.getAudioStream(song.source, song.id).then(
+        res => {
+          setBufferingState(false)
+          song.stream_url = res;
+          // needed here beacuse it has to be linked to this promise
+          setPlayingSong(song);
+        }
+      ).catch(err => {
+        setBufferingState(false); // Handle errors and stop buffering
+        console.error('Error fetching audio stream:', err);
+      });
+    }
+    else {
+      setPlayingSong(song);
+    }
+  }
   const isPlaying = Object.keys(playingSong).length > 0; // true if a song is playing
+
 
   //####### queue and queue methods
   const [queue, setQueue] = useState([]);
 
   const addToQueue = (song) => {
     setQueue(oldQueue => [...oldQueue, song]);
+
   };
   
   const clearQueue = () => {
@@ -56,7 +78,7 @@ function App() {
         <NavigationBar />
         <Routes>
           <Route path="*" element={<>
-            {isPlaying ? <MusicPlayer clearPlayingSong={clearPlayingSong} playingSong={playingSong} playSong={playSong} queue={queue} removeElementFromQueue={removeElementFromQueue} /> : null}
+            {isPlaying || bufferingState ? <MusicPlayer clearPlayingSong={clearPlayingSong} playingSong={playingSong} playSong={playSong} queue={queue} removeElementFromQueue={removeElementFromQueue} bufferingState={bufferingState} /> : null}
             <SearchBar searchQuery={searchQuery} updateSearchQuery={updateSearchQuery} clearSongs={clearSongs} />
             {foundSongs ? <ResultList songs={songs} playSong={playSong} addToQueue={addToQueue} /> : null}
           </>} />
