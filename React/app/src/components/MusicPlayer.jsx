@@ -17,18 +17,44 @@ import Tooltip from 'react-bootstrap/Tooltip';
 
 function MusicPlayer(props) {
 
-  
+
+  return (
+    <Container>
+      {props.bufferingState ? (
+        // Render nothing or a loader if bufferingState is true
+        <BufferingCard clearPlayingSong={props.clearPlayingSong}></BufferingCard>
+      ) : (
+        <PlayingCard clearPlayingSong={props.clearPlayingSong} playingSong={props.playingSong} queue={props.queue}></PlayingCard>
+      )
+      }
+    </Container>
+  );
+}
+
+
+
+
+function BufferingCard(props) {
+
+  return (
+    <Card className="text-center">
+      <CloseButton aria-label="Hide" onClick={props.clearPlayingSong} />
+      <Card.Img src={"./src/assets/buffering.gif"} />
+    </Card>
+  )
+}
+
+function PlayingCard(props) {
+
   const playNextSongFromQueue = () => {
     props.playSong(props.queue[0])
     props.removeElementFromQueue(0)
   }
 
-
   return (
-  <Container>
     <Card className="text-center">
-    <CloseButton aria-label="Hide" onClick={props.clearPlayingSong}/>
-      <Card.Img  src={props.playingSong.image} />
+      <CloseButton aria-label="Hide" onClick={props.clearPlayingSong} />
+      <Card.Img src={props.playingSong.image} />
       {/* <Card.ImgOverlay> */}
       <Card.Body>
         <Card.Title>{props.playingSong.title}</Card.Title>
@@ -38,20 +64,16 @@ function MusicPlayer(props) {
 
       </Card.Body>
       {/* </Card.ImgOverlay> */}
-
     </Card>
-    </Container>
-  );
+  )
 }
-
-
 
 function Controls(props) {
   const overlayDelayShow = 250
   const overlayDelayHide = 400
 
 
-  //init as true to start the song after selected it from the result list
+  // init as true to start the song after selected it from the result list
   const [isPlaying, setIsPlaying] = useState(true); 
   const audioRef = useRef(null); //reference to the audio
   const [progress, setProgress] = useState(0); //state of the progress bar
@@ -60,7 +82,7 @@ function Controls(props) {
   const [skipInterval, setSkipInterval] = useState(10)
 
   const handlePlayPause = () => {
-    //set the audio reference state according the play/pause button pressiong
+    // set the audio reference state according the play/pause button pressiong
     if (isPlaying) {
       audioRef.current.pause();
     } else {
@@ -170,7 +192,7 @@ function Controls(props) {
   <Container>
   <Stack gap={3}>
 
-  <audio ref={audioRef} src={props.song.music} onEnded={handleEnded} />
+        <audio ref={audioRef} src={props.song.stream_url} onEnded={handleEnded} />
 
     <Row className="align-items-center">
       <Col xs="auto"  className="d-flex align-items-center">
