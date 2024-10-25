@@ -1,5 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Response
-from fastapi import Query
+from fastapi import APIRouter, BackgroundTasks, Query
 from fastapi.responses import StreamingResponse
 import requests
 from bs4 import BeautifulSoup
@@ -8,24 +7,7 @@ import yt_dlp
 import os
 import aiofiles
 
-YOUTUBE_SEARCH_URL = "https://www.youtube.com/results"
-
-# Directory for temporary audio files
-TEMP_AUDIO_DIR = "temp_audio"
-
-
-# Ensure the temp audio directory exists
-if not os.path.exists(TEMP_AUDIO_DIR):
-    os.makedirs(TEMP_AUDIO_DIR)
-
-# good to have this but not only @ startup and shoutdown, we need cyclically 
-# @app.on_event("startup")
-# async def cleanup_temp_files():
-#     """
-#     Clean up any leftover temporary audio files on startup.
-#     """
-#     shutil.rmtree(TEMP_AUDIO_DIR)
-#     os.makedirs(TEMP_AUDIO_DIR)
+from FastAPI.utils.const import *
 
 
 
