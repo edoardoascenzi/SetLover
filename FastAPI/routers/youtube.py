@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 import requests
 from bs4 import BeautifulSoup
@@ -26,33 +26,30 @@ async def youtube_search(q: str = Query(..., min_length=1)):
     return {"results": results}
 
 @router.get("/play")
-async def youtube_audio(id: str, background_tasks: BackgroundTasks):
+async def youtube_play(id: str = Query(..., min_length=1)):
     """
     Endpoint to extract audio from a YouTube video and stream it.
     """
-    video_url = f"https://www.youtube.com/watch?v={id}"
-
-    # Generate a unique filename for the extracted audio
-    audio_file_no_extension = os.path.join(TEMP_AUDIO_DIR, f"{router.tags[0].lower()}_{id}")
-    audio_file = audio_file_no_extension + ".mp3"
-
-    # Check if the audio is already available
-    if not os.path.isfile(audio_file):    
-        # Start the audio extraction asynchronously
-        await extract_audio(video_url, audio_file_no_extension)
-
-    # # Add background task to delete the file after serving
-    # background_tasks.add_task(os.remove, audio_file)
+    audio_file = extract_audio(id)
 
     # Stream the audio file back to the client
     return StreamingResponse(stream_audio(audio_file), media_type="audio/mpeg")
+
+@router.get("/download")
+async def youtube_download(id: str = Query(..., min_length=1)):
+    """
+    Endpoint to download audio from a YouTube video.
+    """
+    extract_audio(id)
+    
+    return{"status" : "Downloaded"} 
 
 
 
 
 def scrape_youtube_search(query: str):
     # Format the YouTube search URL with the query
-    search_url = f"https://www.youtube.com/results?search_query={query.replace(' ', '+').replace('%','+')}"
+    search_url = f"{YOUTUBE_SEARCH_URL}{query.replace(' ', '+').replace('%','+')}"
     
     # Send a request to the YouTube search results page
     response = requests.get(search_url)
@@ -109,26 +106,23 @@ def scrape_youtube_search(query: str):
     except KeyError:
         return {"error": "Failed to parse video data from the search results"}
     
-    # if isinstance(video_results, list):
-    #     for idx, video in enumerate(results, start=1):
-    #         print(f"{idx}. {video['title']} by {video['channel']}")
-    #         print(f"   Length: {video['length']}")
-    #         print(f"   Thumbnail: {video['thumbnail_url']}")
-    #         print(f"   URL: {video['video_url']}")
-    #         print(f"   Video ID: {video['video_id']}")
-    #         print()
-    # else:
-    #     print(video_results['error'])
-
     return video_results
 
-
-
-async def extract_audio(video_url: str, audio_file: str):
+# async def extract_audio(video_url: str, audio_file: str):
+def extract_audio(id: str) -> str: # TODO add error catch and raise HTTPException(status_code=status.)
     """
     Extracts the audio from the YouTube video and saves it as an MP3 file.
     """
-    ffmpeg_location = './FastAPI/third_party/ffmpeg/bin/' 
+    video_url = f"{YOUTUBE_VIDEO_URL}{id}"
+
+    audio_file_no_extension = os.path.join(TEMP_AUDIO_DIR, f"{router.tags[0].lower()}_{id}")
+    audio_file = audio_file_no_extension + ".mp3"
+
+    # Check if the audio is already available
+    if os.path.isfile(audio_file):    
+        # exit and return the audio file name
+        return audio_file
+
     ydl_opts = {
         'format': 'bestaudio/best',
         'postprocessors': [{
@@ -136,14 +130,16 @@ async def extract_audio(video_url: str, audio_file: str):
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'outtmpl': audio_file,  # Save the file as a unique name
+        'outtmpl': audio_file_no_extension,  # Save the file as a unique name adding the ext
         'quiet': True,  # Suppress output for cleanliness
-        'ffmpeg_location': ffmpeg_location,  # Point to local ffmpeg binary
+        'ffmpeg_location': FFMPEG_LOCATION,  # Point to local ffmpeg binary
         'postprocessor_args': ['-f', 'mp3'],  # Force output as mp3 without adding an 
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([video_url])
+
+    return audio_file
  
 
 async def stream_audio(file_path: str):
