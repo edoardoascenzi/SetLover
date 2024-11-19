@@ -43,7 +43,7 @@ function App() {
         }
       ).catch(err => {
         setBufferingState(false); // Handle errors and stop buffering
-        console.error('Error fetching audio stream:', err);
+        console.error('Error fetching or playing audio stream:', err);
       });
     }
     else {
@@ -57,8 +57,21 @@ function App() {
   const [queue, setQueue] = useState([]);
 
   const addToQueue = (song) => {
-    setQueue(oldQueue => [...oldQueue, song]);
-
+    if (song.stream_url === "") {
+      API.getAudioStream(song.source, song.id).then(
+        res => {
+          song.stream_url = res;
+          // needed here beacuse it has to be linked to this promise
+          setQueue(oldQueue => [...oldQueue, song]);
+        }
+      ).catch(err => {
+        setBufferingState(false); // Handle errors and stop buffering
+        console.error('Error fetching or downloading audio stream:', err);
+      });
+    }
+    else {
+      setQueue(oldQueue => [...oldQueue, song]);
+    }
   };
   
   const clearQueue = () => {
