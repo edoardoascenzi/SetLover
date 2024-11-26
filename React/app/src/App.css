@@ -40,3 +40,11 @@
 .read-the-docs {
   color: #888;
 }
+
+
+/* Further reduce text size for very small screens (max-width: 480px) */
+@media (max-width: 500px) {
+  body {
+    font-size: calc(100% - 4px);  /* Reduce the font size by 4px for very small screens */
+  }
+}

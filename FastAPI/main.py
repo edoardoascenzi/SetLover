@@ -22,12 +22,12 @@ async def lifespan(app: FastAPI):
     #run the clean temp file in the startup 
     cleanup_temp_files()
     # add the clean temp file job to a schedule
-    scheduler.add_job(cleanup_temp_files, 'interval', minutes=TIMEOUT_DELETE_TEMP_AUDIO_H)
-    scheduler.start()
+    # scheduler.add_job(cleanup_temp_files, 'interval', minutes=TIMEOUT_DELETE_TEMP_AUDIO_H)
+    # scheduler.start()
     ## END STARTUP
     yield
     ## START SHUTDOWN
-    scheduler.shutdown()
+    # scheduler.shutdown()
     ## END SHUTDOWN
 
 # Scheduler instance
@@ -36,7 +36,7 @@ scheduler = BackgroundScheduler()
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    "http://localhost:5173",
+    "*",
 ]
 
 app.add_middleware(

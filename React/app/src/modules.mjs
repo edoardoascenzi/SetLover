@@ -1,5 +1,5 @@
 
-export function Song(id, title, source, ext_url = "", length = "", description = "", image = ".assets/gandalf.gif", stream_url = "") {
+export function Song(id, title, source, ext_url = "", length = "", description = "", image = "/gandalf.gif", stream_url = "") {
     this.id = id
     this.title = title
     this.source = source

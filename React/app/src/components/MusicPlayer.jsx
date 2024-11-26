@@ -39,7 +39,7 @@ function BufferingCard(props) {
   return (
     <Card className="text-center">
       <CloseButton aria-label="Hide" onClick={props.clearPlayingSong} />
-      <Card.Img src={"./src/assets/buffering.gif"} />
+      <Card.Img src={"/buffering.gif"} />
     </Card>
   )
 }
