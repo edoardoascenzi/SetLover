@@ -1,0 +1,22 @@
+[Unit]
+Description=FastAPI Application for backend of SetLover
+After=network.target
+
+[Service]
+User=edo
+Group=www-data
+WorkingDirectory=#########/SetLover
+# gunicorn -w 2 -k uvicorn.workers.UvicornWorker FastAPI.main:app --bind 127.0.0.1:8000 --log-level info --access-logfile /var/log/fastapi_access.log --error-logfile /var/log/fastapi_error.log
+ExecStart= ######/SetLover/FastAPI/venv/bin/python3 -m uvicorn FastAPI.main:app
+Environment="PATH=######/SetLover/FastAPI/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+Restart=always
+RestartSec=3
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=backend
+
+[Install]
+WantedBy=multi-user.target
