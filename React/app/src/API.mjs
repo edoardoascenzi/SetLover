@@ -2,13 +2,17 @@ import { Song } from './modules.mjs'
 
 // const SERVER_URL = 'http://127.0.0.1:8000/';
 const SERVER_URL = '';
+const PREFIX_URL = '/api'
 const SEARCH_ROUTE = '/search?q=';
 const PLAY_ROUTE = '/play?id=';
 const DOWNLOAD_ROUTE = '/play?id=';
 
+function createUrl(source, route, attribute) {
+    return `${SERVER_URL}${PREFIX_URL}/${source.toLowerCase()}${route}${attribute}`;
+}
 
 async function getAudioStream(source, id) {
-    const fullQuery = `${SERVER_URL}${source.toLowerCase()}${PLAY_ROUTE}${id}`;
+    const fullQuery = createUrl(source, PLAY_ROUTE, id);
     try {
         const response = await fetch(fullQuery);
 
@@ -31,7 +35,7 @@ async function getAudioStream(source, id) {
 
 
 async function downlaodAudio(source, id) {
-    const fullQuery = `${SERVER_URL}${source.toLowerCase()}${DOWNLOAD_ROUTE}${id}`;
+    const fullQuery = createUrl(source, DOWNLOAD_ROUTE, id);
     try {
         const response = await fetch(fullQuery);
 
@@ -53,7 +57,7 @@ async function downlaodAudio(source, id) {
 }
 
 async function getSearchResult(source, query) {
-    const fullQuery = `${SERVER_URL}${source.toLowerCase()}${SEARCH_ROUTE}${encodeURIComponent(query)}`;
+    const fullQuery = createUrl(source, SEARCH_ROUTE, query);
     try {
         const response = await fetch(fullQuery);
         const res = await response.json();
