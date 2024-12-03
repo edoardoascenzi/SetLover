@@ -1,0 +1,77 @@
+name: Deploy React & FastAPI
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on pushes to the `main` branch.
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3  # Fetch the latest code from the repository.
+
+    - name: Deploy to server
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_github_actions ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_ADDRESS }} -p ${{ secrets.SERVER_PORT }} << 'EOF'
+          set -e
+
+          GIT_REPO=/home/${{ secrets.SERVER_USER }}/SetLover
+          REACT_DIR=$GIT_REPO/React/app
+          FASTAPI_DIR=$GIT_REPO/FastAPI
+          BRANCH=main
+
+          ## Pull latest code
+          cd $GIT_REPO
+          git reset --hard HEAD
+          git checkout $BRANCH
+          git pull origin $BRANCH
+
+          ## React pipeline
+          # Ensure nvm is available after installation
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          # Installing Node.js version $NODE_VERSION
+          nvm install $NODE_VERSION
+          nvm use $NODE_VERSION
+
+          # Navigating to the React app directory
+          cd "$REACT_DIR"
+
+          # Installing npm dependencies
+          npm install --silent
+
+          # Building the React app
+          npm run build
+
+          ## FastAPI pipeline
+          # Check if a virtual environment already exists
+          if [ ! -d "venv" ]; then
+              # Creating virtual environment
+              python3 -m venv venv
+          else
+              echo "Virtual environment already exists. Skipping creation."
+          fi
+
+          echo "Activating virtual environment..."
+          source venv/bin/activate
+
+          # Install the required packages
+          if [ -f "requirements.txt" ]; then
+              echo "Installing dependencies from requirements.txt..."
+              pip install -r requirements.txt
+          else
+              echo "requirements.txt not found. Skipping package installation."
+          fi
+
+          echo "Setup completed. Virtual environment is ready."
+
+          ## Restart services
+          sudo systemctl reload nginx.service
+          sudo systemctl restart backend.service
+        EOF
