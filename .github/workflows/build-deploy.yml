@@ -3,75 +3,67 @@ name: Deploy React & FastAPI
 on:
   push:
     branches:
-      - main  # Trigger workflow on pushes to the `main` branch.
+      - main # Trigger the workflow on pushes to the main branch.
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: prod
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3  # Fetch the latest code from the repository.
+      - name: Checkout code
+        uses: actions/checkout@v3 # Fetch the latest code from the repository.
 
-    - name: Deploy to server
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_github_actions ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_ADDRESS }} -p ${{ secrets.SERVER_PORT }} << 'EOF'
-          set -e
+      - name: Generate private key
+        run: |
+          echo "Ensure the .ssh directory exists"
+          mkdir -p ~/.ssh
+          echo "Save the private key to a file"
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_github_actions
+          chmod 600 ~/.ssh/id_github_actions
 
-          GIT_REPO=/home/${{ secrets.SERVER_USER }}/SetLover
-          REACT_DIR=$GIT_REPO/React/app
-          FASTAPI_DIR=$GIT_REPO/FastAPI
-          BRANCH=main
+      - name: Build and deploy project
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_github_actions ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_ADDRESS }} -p ${{ secrets.SERVER_PORT }} << 'EOF'
+            set -e
 
-          ## Pull latest code
-          cd $GIT_REPO
-          git reset --hard HEAD
-          git checkout $BRANCH
-          git pull origin $BRANCH
+            GIT_REPO=/home/${{ secrets.SERVER_USER }}/SetLover
+            REACT_DIR=$GIT_REPO/React/app
+            FASTAPI_DIR=$GIT_REPO/FastAPI
+            BRANCH=main
 
-          ## React pipeline
-          # Ensure nvm is available after installation
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          
-          # Installing Node.js version $NODE_VERSION
-          nvm install $NODE_VERSION
-          nvm use $NODE_VERSION
+            NODE_VERSION=22
 
-          # Navigating to the React app directory
-          cd "$REACT_DIR"
 
-          # Installing npm dependencies
-          npm install --silent
+            ## Pull latest code
+            cd $GIT_REPO
+            git fetch
+            git reset --hard origin/$BRANCH
 
-          # Building the React app
-          npm run build
+            ## React pipeline
+            # Loading nvm into the current session...
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-          ## FastAPI pipeline
-          # Check if a virtual environment already exists
-          if [ ! -d "venv" ]; then
-              # Creating virtual environment
-              python3 -m venv venv
-          else
-              echo "Virtual environment already exists. Skipping creation."
-          fi
+            # Install Node.js version
+            nvm install $NODE_VERSION
+            nvm use $NODE_VERSION
 
-          echo "Activating virtual environment..."
-          source venv/bin/activate
+            # Build the React app
+            cd "$REACT_DIR"
+            npm install --silent
+            npm run build
 
-          # Install the required packages
-          if [ -f "requirements.txt" ]; then
-              echo "Installing dependencies from requirements.txt..."
-              pip install -r requirements.txt
-          else
-              echo "requirements.txt not found. Skipping package installation."
-          fi
+            ## FastAPI pipeline
+            if [ ! -d "venv" ]; then
+                python3 -m venv venv
+            fi
+            source venv/bin/activate
+            [ -f "requirements.txt" ] && pip install -r requirements.txt
 
-          echo "Setup completed. Virtual environment is ready."
-
-          ## Restart services
-          sudo systemctl reload nginx.service
-          sudo systemctl restart backend.service
-        EOF
+            ## Restart services
+            sudo systemctl start nginx.service
+            sudo systemctl reload nginx.service
+            sudo systemctl restart backend.service
+          EOF
